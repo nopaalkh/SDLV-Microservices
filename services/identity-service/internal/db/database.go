@@ -48,6 +48,7 @@ func runMigrations(db *sql.DB) error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS users (
 		id VARCHAR(36) PRIMARY KEY,
+		name VARCHAR(255) NOT NULL DEFAULT '',
 		email VARCHAR(255) UNIQUE NOT NULL,
 		password VARCHAR(255) NOT NULL,
 		role VARCHAR(20) NOT NULL,
@@ -74,6 +75,7 @@ func runMigrations(db *sql.DB) error {
 
 	// Add status column if it doesn't exist (for existing databases)
 	_, _ = db.Exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'`)
+	_, _ = db.Exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255) NOT NULL DEFAULT ''`)
 
 	// Create indexes
 	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
@@ -112,8 +114,9 @@ func seedAdmin(db *sql.DB, adminEmail string, adminPassword string) error {
 	// Create admin user
 	now := time.Now()
 	_, err = db.Exec(
-		`INSERT INTO users (id, email, password, role, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		`INSERT INTO users (id, name, email, password, role, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		"00000000-0000-0000-0000-000000000001",
+		"Administrator",
 		adminEmail,
 		string(hashedPw),
 		"ADMIN",

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="azetqu-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="12" fill="url(#azetqu-grad)" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M24 8 L8 40 H15 L18 34 H30 L33 40 H40 L24 8 Z M24 22 L21.5 27 H26.5 Z" fill="#ffffff"/>
+</svg>

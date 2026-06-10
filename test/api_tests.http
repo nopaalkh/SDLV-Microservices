@@ -1,0 +1,115 @@
+### DIGITAL ASSET MARKETPLACE - MANUAL API TEST
+@baseUrl = http://localhost:8080
+
+# @name healthCheck
+GET {{baseUrl}}/health
+
+### 1. Register Creator
+# @name registerCreator
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "creator_manual@test.com",
+  "password": "password123",
+  "role": "CREATOR"
+}
+
+### 2. Register Buyer
+# @name registerBuyer
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "buyer_manual@test.com",
+  "password": "password123",
+  "role": "BUYER"
+}
+
+### 3. Login Creator
+# @name loginCreator
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "creator_manual@test.com",
+  "password": "password123"
+}
+
+### 4. Login Buyer
+# @name loginBuyer
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer_manual@test.com",
+  "password": "password123"
+}
+
+### COPY TOKEN DARI HASIL LOGIN DI ATAS DAN PASTE DI BAWAH INI
+@creatorToken = {{loginCreator.response.body.token}}
+@buyerToken = {{loginBuyer.response.body.token}}
+
+### 5. Get Creator Profile
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{creatorToken}}
+
+### 6. Create Asset (Creator)
+# @name createAsset
+POST {{baseUrl}}/api/assets/
+Authorization: Bearer {{creatorToken}}
+Content-Type: application/json
+
+{
+  "title": "3D Character Asset",
+  "description": "Premium game-ready low poly character",
+  "price": 15.00,
+  "ai_tool_used": "None",
+  "resolution": "N/A",
+  "preview_url": "https://example.com/preview.jpg",
+  "storage_path": "/storage/char.zip"
+}
+
+### COPY ASSET ID DARI HASIL DI ATAS
+@assetId = {{createAsset.response.body.id}}
+
+### 7. Get Asset Detail (Public - Tanpa Auth)
+GET {{baseUrl}}/api/assets/{{assetId}}
+
+### 8. List My Assets (Creator)
+GET {{baseUrl}}/api/assets/my-assets
+Authorization: Bearer {{creatorToken}}
+
+### 9. Search Assets (Public)
+POST {{baseUrl}}/api/assets/search
+Content-Type: application/json
+
+{
+  "query": "Character"
+}
+
+### 10. Create Order (Buyer)
+# @name createOrder
+POST {{baseUrl}}/api/orders/
+Authorization: Bearer {{buyerToken}}
+Content-Type: application/json
+
+{
+  "asset_id": "{{assetId}}",
+  "quantity": 1
+}
+
+### COPY ORDER ID DARI HASIL DI ATAS
+@orderId = {{createOrder.response.body.id}}
+
+### 11. List My Orders (Buyer)
+GET {{baseUrl}}/api/orders/my-orders
+Authorization: Bearer {{buyerToken}}
+
+### 12. Mock Payment (Proses Bayar)
+PUT {{baseUrl}}/api/orders/{{orderId}}/mock-pay
+Authorization: Bearer {{buyerToken}}
+
+### 13. Verify Order Status (Harus PAID)
+GET {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{buyerToken}}

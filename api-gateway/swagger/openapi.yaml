@@ -1,0 +1,1196 @@
+openapi: 3.0.3
+info:
+  title: Digital Asset Marketplace API
+  description: |
+    REST API documentation for the **Digital Asset Marketplace** — a microservices-based platform
+    for buying and selling AI-generated digital assets.
+
+    ## Architecture
+    The system consists of three microservices orchestrated through an API Gateway (nginx):
+    - **Identity Service** — User registration, authentication, and profile management
+    - **Catalog Service** — Digital asset listing, search, and management
+    - **Order Service** — Order creation, payment processing, and order tracking
+
+    ## Authentication
+    Most endpoints require a JWT Bearer token obtained from the login endpoint.
+    Include the token in the `Authorization` header: `Bearer <your_token>`
+  version: 1.0.0
+  contact:
+    name: Digital Asset Marketplace Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local Development (API Gateway)
+  - url: http://localhost:3001
+    description: Identity Service (Direct)
+  - url: http://localhost:3002
+    description: Catalog Service (Direct)
+  - url: http://localhost:3003
+    description: Order Service (Direct)
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Authentication
+    description: User registration, login, and profile
+  - name: Assets
+    description: Digital asset management and discovery
+  - name: Orders
+    description: Order creation, payment, and tracking
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the Login endpoint
+
+  schemas:
+    # ── Error ──
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "error message"
+
+    # ── Identity Service ──
+    RegisterRequest:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 6
+          example: "securepassword"
+        role:
+          type: string
+          enum: [BUYER, CREATOR]
+          example: "BUYER"
+          description: "Only BUYER or CREATOR allowed. ADMIN cannot self-register."
+
+    RegisterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        role:
+          type: string
+          example: "BUYER"
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          example: "securepassword"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token to use for authenticated requests
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        role:
+          type: string
+          enum: [BUYER, CREATOR, ADMIN]
+          example: "CREATOR"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-06-06T09:24:00Z"
+
+    # ── Catalog Service ──
+    CreateAssetRequest:
+      type: object
+      required: [title, price, storage_path]
+      properties:
+        title:
+          type: string
+          example: "Neon Cyberpunk City Pack"
+        description:
+          type: string
+          example: "3D assets for cyberpunk themed environments"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 29.99
+        category:
+          type: string
+          example: "3D Models"
+        ai_tool_used:
+          type: string
+          example: "MidJourney"
+        resolution:
+          type: string
+          example: "4096x4096"
+        preview_url:
+          type: string
+          format: uri
+          example: "https://example.com/preview.jpg"
+        storage_path:
+          type: string
+          example: "/assets/cyberpunk_pack.zip"
+
+    AssetResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        title:
+          type: string
+          example: "Neon Cyberpunk City Pack"
+        description:
+          type: string
+          example: "3D assets for cyberpunk themed environments"
+        price:
+          type: number
+          format: double
+          example: 29.99
+        category:
+          type: string
+          example: "3D Models"
+        ai_tool_used:
+          type: string
+          example: "MidJourney"
+        resolution:
+          type: string
+          example: "4096x4096"
+        preview_url:
+          type: string
+          example: "https://example.com/preview.jpg"
+        sales_count:
+          type: integer
+          example: 42
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-06-06T09:25:05Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-06-06T09:25:05Z"
+        created_by:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+    AssetListResponse:
+      type: object
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetResponse'
+
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          example: "cyberpunk"
+        category:
+          type: string
+          example: "3D Models"
+        sort_by:
+          type: string
+          example: "price_desc"
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
+
+    UpdateAssetRequest:
+      type: object
+      required: [title, price, storage_path]
+      properties:
+        title:
+          type: string
+          example: "Updated Asset Title"
+        description:
+          type: string
+          example: "Updated description"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 39.99
+        ai_tool_used:
+          type: string
+          example: "DALL-E 3"
+        resolution:
+          type: string
+          example: "8192x8192"
+        preview_url:
+          type: string
+          format: uri
+          example: "https://example.com/updated_preview.jpg"
+        storage_path:
+          type: string
+          example: "/assets/updated_pack.zip"
+
+    # ── Order Service ──
+    CreateOrderRequest:
+      type: object
+      required: [asset_id, quantity]
+      properties:
+        asset_id:
+          type: string
+          format: uuid
+          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c3d4e5f6-a7b8-9012-cdef-123456789012"
+        user_id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        asset_id:
+          type: string
+          format: uuid
+          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        quantity:
+          type: integer
+          example: 1
+        total_price:
+          type: number
+          format: double
+          example: 29.99
+        status:
+          type: string
+          enum: [PENDING, PAID, FAILED, EXPIRED]
+          example: "PENDING"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-06-06T10:00:00Z"
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        asset_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        total_price:
+          type: number
+          format: double
+        platform_fee:
+          type: number
+          format: double
+        creator_revenue:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [PENDING, PAID, FAILED, EXPIRED]
+        secure_download_token:
+          type: string
+          description: Only included when order status is PAID
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OrderListResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+
+    SuccessMessage:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+
+paths:
+  # ── Health ──
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns OK if the API Gateway is running
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+  # ── Authentication ──
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: |
+        Creates a new user account. Only **BUYER** and **CREATOR** roles are allowed.
+        ADMIN accounts cannot be self-registered.
+        Password must be at least 6 characters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid input (bad email, weak password, or invalid role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_role:
+                  value: { "error": "Invalid role. Must be BUYER or CREATOR" }
+                weak_password:
+                  value: { "error": "Password must be at least 6 characters" }
+                invalid_email:
+                  value: { "error": "Invalid email format" }
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login and get JWT token
+      description: Authenticates a user and returns a JWT token for subsequent requests.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user profile
+      description: Returns the profile of the currently authenticated user.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Catalog / Assets ──
+  /api/assets/:
+    post:
+      tags: [Assets]
+      summary: Create a new digital asset
+      description: Creates a new digital asset. Requires authentication (CREATOR role recommended).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAssetRequest'
+      responses:
+        '201':
+          description: Asset created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetResponse'
+        '400':
+          description: Invalid asset data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/assets/{id}:
+    get:
+      tags: [Assets]
+      summary: Get asset by ID
+      description: Returns a single asset's details. **This endpoint is public** — no authentication required.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Asset UUID
+      responses:
+        '200':
+          description: Asset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetResponse'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Assets]
+      summary: Update an asset
+      description: Updates an existing asset. Only the asset creator can update it.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAssetRequest'
+      responses:
+        '200':
+          description: Asset updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetResponse'
+        '403':
+          description: Not the asset owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags: [Assets]
+      summary: Delete an asset
+      description: Deletes an asset. Only the asset creator can delete it.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Asset deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '403':
+          description: Not the asset owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/assets/my-assets:
+    get:
+      tags: [Assets]
+      summary: List my assets
+      description: Returns all assets created by the currently authenticated user.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of user's assets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetListResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/assets/search:
+    post:
+      tags: [Assets]
+      summary: Search assets
+      description: Search for assets by title or description. **This endpoint is public** — no authentication required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetListResponse'
+
+  # ── Orders ──
+  /api/orders/:
+    post:
+      tags: [Orders]
+      summary: Create a new order
+      description: |
+        Creates a new order for a digital asset. The asset is validated against the
+        Catalog Service and the price is fetched automatically.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+        '400':
+          description: Invalid order data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/orders/my-orders:
+    get:
+      tags: [Orders]
+      summary: List my orders
+      description: Returns all orders belonging to the currently authenticated user.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of user's orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/orders/revenue:
+    get:
+      tags: [Orders]
+      summary: Get creator revenue
+      description: Returns the total revenue earned by the authenticated creator. Requires CREATOR role.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Creator revenue details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  creator_id:
+                    type: string
+                    format: uuid
+                    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  revenue:
+                    type: number
+                    example: 150000.00
+                  currency:
+                    type: string
+                    example: "IDR"
+        '401':
+          description: Not authenticated
+        '403':
+          description: Forbidden (Not a creator)
+
+  /api/orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order by ID
+      description: |
+        Returns order details. Only the order owner can view it.
+        If the order status is PAID, a `secure_download_token` is included.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '403':
+          description: Not the order owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/orders/{id}/pay:
+    put:
+      tags: [Orders]
+      summary: Process payment (Midtrans)
+      description: |
+        Initiates payment via Midtrans Snap for the specified order.
+        Only the order owner can initiate payment, and the order must be in PENDING status.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Order is not in PENDING status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not the order owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/orders/{id}/mock-pay:
+    put:
+      tags: [Orders]
+      summary: Mock payment (Testing)
+      description: |
+        Simulates a successful payment for testing purposes.
+        Changes order status from PENDING to PAID and generates a download token.
+        **For development/testing only.**
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Mock payment processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "mock payment processed successfully"
+        '400':
+          description: Order is not in PENDING status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Admin ──
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users
+      description: Returns a list of all users. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of users
+        '403':
+          description: Forbidden (Not an admin)
+
+  /api/admin/users/{id}/suspend:
+    put:
+      tags: [Admin]
+      summary: Suspend user account
+      description: Suspends a user account so they can no longer login. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User suspended successfully
+        '403':
+          description: Forbidden (Not an admin)
+        '404':
+          description: User not found
+
+  /api/admin/users/{id}/unsuspend:
+    put:
+      tags: [Admin]
+      summary: Reactivate user account
+      description: Reactivates a previously suspended user account. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User reactivated successfully
+        '403':
+          description: Forbidden (Not an admin)
+        '404':
+          description: User not found
+
+  /api/admin/assets:
+    get:
+      tags: [Admin]
+      summary: List all assets
+      description: Returns a list of all assets in the marketplace. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of all assets
+        '403':
+          description: Forbidden (Not an admin)
+
+  /api/admin/assets/{id}:
+    delete:
+      tags: [Admin]
+      summary: Takedown an asset
+      description: Forcibly deletes an asset from the catalog regardless of ownership. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Asset taken down
+        '403':
+          description: Forbidden (Not an admin)
+        '404':
+          description: Asset not found
+
+  /api/admin/orders:
+    get:
+      tags: [Admin]
+      summary: List all orders
+      description: Returns a global list of all orders across the marketplace. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of all orders
+        '403':
+          description: Forbidden (Not an admin)
+
+  /api/admin/orders/revenue:
+    get:
+      tags: [Admin]
+      summary: Get total platform revenue
+      description: Returns the total platform fee from all PAID orders.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Platform revenue details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  platform_revenue:
+                    type: number
+                    example: 16000.00
+                  currency:
+                    type: string
+                    example: "IDR"
+
+  /api/withdrawals:
+    post:
+      tags: [Orders]
+      summary: Request a withdrawal
+      description: Allows a CREATOR to request a withdrawal of their revenue.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, bank_code, account_number]
+              properties:
+                amount:
+                  type: number
+                  example: 150000.00
+                bank_code:
+                  type: string
+                  example: "BCA"
+                account_number:
+                  type: string
+                  example: "1234567890"
+      responses:
+        '201':
+          description: Withdrawal requested
+        '400':
+          description: Bad request or insufficient balance
+        '403':
+          description: Forbidden (Not a creator)
+
+  /api/withdrawals/my-withdrawals:
+    get:
+      tags: [Orders]
+      summary: List creator's withdrawals
+      description: Returns a list of all withdrawals requested by the authenticated creator.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of withdrawals
+
+  /api/admin/withdrawals:
+    get:
+      tags: [Admin]
+      summary: List all withdrawals
+      description: Returns all withdrawals. Requires ADMIN role.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of withdrawals
+
+  /api/admin/withdrawals/{id}/approve:
+    put:
+      tags: [Admin]
+      summary: Approve a withdrawal
+      description: Approves a pending withdrawal request.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Withdrawal approved
+
+  /api/admin/withdrawals/{id}/reject:
+    put:
+      tags: [Admin]
+      summary: Reject a withdrawal
+      description: Rejects a pending withdrawal request.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Withdrawal rejected
+
+  /api/assets/{id}/reviews:
+    post:
+      tags: [Assets]
+      summary: Add a review
+      description: Allows a BUYER to review an asset they have successfully purchased (PAID).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating, comment]
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 5
+                comment:
+                  type: string
+                  example: "Great asset!"
+      responses:
+        '201':
+          description: Review added
+        '403':
+          description: Forbidden (Not purchased)
+
+    get:
+      tags: [Assets]
+      summary: Get asset reviews
+      description: Returns all reviews for a specific asset.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of reviews
+
+  /api/auth/password:
+    put:
+      tags: [Authentication]
+      summary: Change Password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Bad request or incorrect current password
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Forgot Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset link sent
+
+  /api/auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          description: Invalid or expired token
+
+  /api/orders/midtrans-webhook:
+    post:
+      tags: [Orders]
+      summary: Midtrans Webhook Notification
+      description: Handles asynchronous payment notifications from Midtrans.
+      responses:
+        '200':
+          description: Webhook received successfully

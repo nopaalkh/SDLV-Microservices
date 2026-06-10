@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Asset Marketplace — API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f0f1a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* ── Top Bar ── */
+        .topbar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 24px 48px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .topbar .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .topbar h1 {
+            color: #e2e8f0;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .topbar p {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .topbar .version {
+            margin-left: auto;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        /* ── Swagger UI Theme Override ── */
+        .swagger-ui {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px 60px;
+        }
+
+        /* Hide default swagger top bar & info */
+        .swagger-ui .topbar { display: none !important; }
+
+        .swagger-ui .info { margin: 30px 0 20px; }
+        .swagger-ui .info hgroup.main { margin: 0; }
+        .swagger-ui .info .title { color: #e2e8f0 !important; font-size: 0 !important; }
+        .swagger-ui .info .description p { color: #cbd5e1; line-height: 1.7; }
+        .swagger-ui .info .description h2 { color: #e2e8f0; margin: 16px 0 8px; }
+
+        /* Scheme container */
+        .swagger-ui .scheme-container {
+            background: #1e1e32 !important;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: none;
+        }
+
+        /* Tags */
+        .swagger-ui .opblock-tag {
+            color: #e2e8f0 !important;
+            border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+            font-size: 18px !important;
+        }
+        .swagger-ui .opblock-tag:hover { background: rgba(99, 102, 241, 0.05) !important; }
+        .swagger-ui .opblock-tag small { color: #94a3b8 !important; }
+
+        /* Operation blocks */
+        .swagger-ui .opblock {
+            border-radius: 10px !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            margin-bottom: 8px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        }
+
+        .swagger-ui .opblock .opblock-summary {
+            border: none !important;
+            padding: 10px 16px !important;
+        }
+
+        .swagger-ui .opblock.opblock-get { background: rgba(16, 185, 129, 0.08) !important; border-color: rgba(16,185,129,0.3) !important; }
+        .swagger-ui .opblock.opblock-post { background: rgba(59, 130, 246, 0.08) !important; border-color: rgba(59,130,246,0.3) !important; }
+        .swagger-ui .opblock.opblock-put { background: rgba(245, 158, 11, 0.08) !important; border-color: rgba(245,158,11,0.3) !important; }
+        .swagger-ui .opblock.opblock-delete { background: rgba(239, 68, 68, 0.08) !important; border-color: rgba(239,68,68,0.3) !important; }
+
+        .swagger-ui .opblock .opblock-summary-path { color: #e2e8f0 !important; }
+        .swagger-ui .opblock .opblock-summary-description { color: #94a3b8 !important; }
+
+        /* Expanded body */
+        .swagger-ui .opblock-body { background: #1a1a2e !important; }
+        .swagger-ui .opblock-body pre.microlight {
+            background: #0f0f1a !important;
+            border-radius: 8px !important;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #e2e8f0 !important;
+        }
+
+        /* Tables */
+        .swagger-ui table thead tr td, .swagger-ui table thead tr th {
+            color: #94a3b8 !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+        }
+        .swagger-ui .parameter__name { color: #e2e8f0 !important; }
+        .swagger-ui .parameter__type { color: #818cf8 !important; }
+
+        /* Models */
+        .swagger-ui section.models { border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px; }
+        .swagger-ui section.models h4 { color: #e2e8f0 !important; }
+        .swagger-ui .model-box { background: #1a1a2e !important; }
+        .swagger-ui .model { color: #cbd5e1 !important; }
+        .swagger-ui .prop-type { color: #818cf8 !important; }
+
+        /* Authorize button */
+        .swagger-ui .btn.authorize {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 8px 20px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3) !important;
+        }
+
+        .swagger-ui .btn.authorize svg { fill: white !important; }
+
+        /* Execute button */
+        .swagger-ui .btn.execute {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+            border: none !important;
+            border-radius: 8px !important;
+        }
+
+        /* Response section */
+        .swagger-ui .responses-inner { background: transparent !important; }
+        .swagger-ui .response-col_status { color: #e2e8f0 !important; }
+        .swagger-ui .response-col_description { color: #cbd5e1 !important; }
+
+        /* Labels & text */
+        .swagger-ui .opblock-section-header { background: rgba(255,255,255,0.03) !important; }
+        .swagger-ui .opblock-section-header h4 { color: #e2e8f0 !important; }
+        .swagger-ui label { color: #94a3b8 !important; }
+        .swagger-ui .tab li { color: #94a3b8 !important; }
+        .swagger-ui .tab li.active { color: #e2e8f0 !important; }
+        .swagger-ui select { background: #1e1e32 !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.15) !important; }
+        .swagger-ui input[type=text] { background: #1e1e32 !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.15) !important; }
+        .swagger-ui textarea { background: #0f0f1a !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
+
+        /* Lock icon */
+        .swagger-ui .authorization__btn svg { fill: #818cf8 !important; }
+
+        /* Markdown in descriptions */
+        .swagger-ui .markdown p, .swagger-ui .markdown li { color: #cbd5e1; }
+        .swagger-ui .markdown code {
+            background: rgba(99,102,241,0.15);
+            color: #a5b4fc;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f0f1a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">🛒</div>
+        <div>
+            <h1>Digital Asset Marketplace</h1>
+            <p>Interactive API Documentation</p>
+        </div>
+        <span class="version">v1.0.0</span>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+    <script>
+        SwaggerUIBundle({
+            url: '/docs/openapi.yaml',
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIBundle.SwaggerUIStandalonePreset
+            ],
+            layout: "BaseLayout",
+            defaultModelsExpandDepth: 1,
+            defaultModelExpandDepth: 2,
+            docExpansion: "list",
+            filter: true,
+            tryItOutEnabled: true,
+            persistAuthorization: true,
+            syntaxHighlight: { theme: "monokai" }
+        });
+    </script>
+</body>
+</html>
